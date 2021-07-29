@@ -15,7 +15,11 @@ func TestInfo(t *testing.T) {
 		{srv.URL, "all"},
 	} {
 
-		got := Info(c.address, c.query)
+		got, err := Info(c.address, c.query)
+
+		if err != nil {
+			t.Error(err)
+		}
 
 		if got == nil {
 			t.Errorf("Info(%q, %q) == %q", c.address, c.query, got)
@@ -32,8 +36,10 @@ func TestLogin(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
 
-	apiInfo := Info(srv.URL, "all")
-
+	apiInfo, err := Info(srv.URL, "all")
+	if err != nil {
+		t.Error(err)
+	}
 	for _, c := range []struct {
 		address string
 		account string
@@ -44,8 +50,10 @@ func TestLogin(t *testing.T) {
 		{srv.URL, "testuser", "password1234", "TestAuth", "cookie"},
 	} {
 
-		got := Login(apiInfo, c.address, c.account, c.passwd, c.session, c.format)
-
+		got, errLogin := Login(apiInfo, c.address, c.account, c.passwd, c.session, c.format)
+		if errLogin != nil {
+			t.Error(errLogin)
+		}
 		if got.Sid != "my_sid_token" {
 			t.Errorf("Login(%q, %q, %q, %q, %q) == %q", c.address, c.account, c.passwd, c.session, c.format, got)
 		}
@@ -58,7 +66,10 @@ func TestLogout(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
 
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, err := Info(srv.URL, "all")
+	if err != nil {
+		t.Error(err)
+	}
 
 	for _, c := range []struct {
 		address string
@@ -67,8 +78,10 @@ func TestLogout(t *testing.T) {
 		{srv.URL, "TestAuth"},
 	} {
 
-		got := Logout(apiInfo, c.address, c.session)
-
+		got, errLogout := Logout(apiInfo, c.address, c.session)
+		if errLogout != nil {
+			t.Error(errLogout)
+		}
 		if !got {
 			t.Errorf("Logout(%q, %q) ==", c.address, c.session)
 		}

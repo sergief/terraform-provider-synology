@@ -28,7 +28,8 @@ func (mockClient SynologyClientMock) Delete(path string, recursive bool) {
 
 }
 
-func (clmockClientient SynologyClientMock) Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) {
+func (mockClientient SynologyClientMock) Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) error {
+	return nil
 }
 
 func TestServiceConnect(t *testing.T) {

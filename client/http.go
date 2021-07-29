@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,12 +17,12 @@ type ApiResponse struct {
 	Data    json.RawMessage
 }
 
-func HttpCall(url string, queryParams map[string]string) (int, []byte) {
+func HttpCall(url string, queryParams map[string]string) (int, []byte, error) {
 	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, nil, err
 	}
 	q := req.URL.Query()
 	for k, v := range queryParams {
@@ -33,30 +34,34 @@ func HttpCall(url string, queryParams map[string]string) (int, []byte) {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, nil, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, nil, err
 	}
 
-	return resp.StatusCode, body
+	return resp.StatusCode, body, nil
 }
 
-func Call(url string, queryParams map[string]string) (int, ApiResponse) {
-	statusCode, body := HttpCall(url, queryParams)
+func Call(url string, queryParams map[string]string) (int, ApiResponse, error) {
+	statusCode, body, err := HttpCall(url, queryParams)
+	if err != nil {
+		return 0, ApiResponse{}, err
+	}
 
 	log.Println(string(body))
 
 	var result ApiResponse
 	json.Unmarshal(body, &result)
 	if !result.Success {
-		log.Fatalln("Error retrieving server data")
+		return statusCode, result, fmt.Errorf("Error retrieving server data: %s", string(body))
 	}
-	return statusCode, result
+
+	return statusCode, result, nil
 }
 
 type keyValuePair struct {
@@ -66,7 +71,7 @@ type keyValuePair struct {
 	fileName string
 }
 
-func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiResponse) {
+func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiResponse, error) {
 	tr := &http.Transport{
 		DisableCompression: true,
 	}
@@ -86,10 +91,10 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 		}
 		if isFile {
 			if fw, err = w.CreateFormFile(key, keyvalue.fileName); err != nil {
-				log.Fatalln(err)
+				return 0, ApiResponse{}, err
 			}
 			if buf, err = ioutil.ReadAll(r); err != nil {
-				log.Fatalln(err)
+				return 0, ApiResponse{}, err
 			}
 			fw.Write(buf)
 
@@ -99,19 +104,19 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 		} else {
 			// Add other fields
 			if fw, err = w.CreateFormField(key); err != nil {
-				log.Fatalln(err)
+				return 0, ApiResponse{}, err
 
 			}
 		}
 		if _, err = io.Copy(fw, r); err != nil {
-			log.Fatalln(err)
+			return 0, ApiResponse{}, err
 		}
 
 	}
 
 	req, err := http.NewRequest("POST", url, &b)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, ApiResponse{}, err
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
@@ -121,12 +126,12 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 	// Submit the request
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, ApiResponse{}, err
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalln(err)
+		return 0, ApiResponse{}, err
 	}
 
 	w.Close()
@@ -134,12 +139,12 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 	var result ApiResponse
 	json.Unmarshal(body, &result)
 	if !result.Success {
-		log.Fatalln("Error retrieving server data: " + string(body))
+		return 0, ApiResponse{}, fmt.Errorf("Error retrieving server data: %s", string(body))
 	}
-	return res.StatusCode, result
+	return res.StatusCode, result, nil
 }
 
-func CallAPI(url string, apiName string, apiInfo map[string]InfoData, queryParams map[string]string) (int, ApiResponse) {
+func CallAPI(url string, apiName string, apiInfo map[string]InfoData, queryParams map[string]string) (int, ApiResponse, error) {
 	info := apiInfo[apiName]
 	queryParams["api"] = apiName
 	queryParams["version"] = strconv.Itoa(info.MaxVersion)

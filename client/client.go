@@ -5,12 +5,12 @@ import (
 )
 
 type SynologyClient interface {
-	Connect(host string, username string, password string)
-	Disconnect()
-	CreateFolder(folderPath string, name string, forceParent bool, additional string) CreateFolderResponse
-	Download(path string) []byte
-	Delete(path string, recursive bool)
-	Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte)
+	Connect(host string, username string, password string) error
+	Disconnect() error
+	CreateFolder(folderPath string, name string, forceParent bool, additional string) (CreateFolderResponse, error)
+	Download(path string) ([]byte, error)
+	Delete(path string, recursive bool) error
+	Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) error
 }
 
 type synologyClient struct {
@@ -19,48 +19,61 @@ type synologyClient struct {
 	sid     string
 }
 
-func (client *synologyClient) Connect(host string, username string, password string) {
+func (client *synologyClient) Connect(host string, username string, password string) error {
 	log.Println("Connect")
-
+	var err error
 	client.host = host
-	client.apiInfo = Info(client.host, "all")
-	client.sid = Login(client.apiInfo, client.host, username, password, "sergief-synology-client", "cookie").Sid
+	client.apiInfo, err = Info(client.host, "all")
+	if err != nil {
+		return err
+	}
+	loginResponse, err := Login(client.apiInfo, client.host, username, password, "sergief-synology-client", "cookie")
+	if err != nil {
+		return err
+	}
+	client.sid = loginResponse.Sid
+
+	return nil
 }
 
-func (client synologyClient) Disconnect() {
+func (client synologyClient) Disconnect() error {
 	log.Println("Disconnect")
 
-	Logout(client.apiInfo, client.host, client.sid)
+	_, err := Logout(client.apiInfo, client.host, client.sid)
+	return err
 }
 
-func (client synologyClient) CreateFolder(folderPath string, name string, forceParent bool, additional string) CreateFolderResponse {
+func (client synologyClient) CreateFolder(folderPath string, name string, forceParent bool, additional string) (CreateFolderResponse, error) {
 	log.Println("CreateFolder")
 
 	return CreateFolder(client.apiInfo, client.host, client.sid, folderPath, name, forceParent, additional)
 }
 
-func (client synologyClient) Download(path string) []byte {
+func (client synologyClient) Download(path string) ([]byte, error) {
 	log.Println("Download")
 
-	statusCode, body := Download(client.apiInfo, client.host, client.sid, path)
+	statusCode, body, err := Download(client.apiInfo, client.host, client.sid, path)
 	if statusCode != 200 {
-		return []byte("")
+		return []byte(""), err
 	}
 
-	return body
+	return body, err
 }
 
-func (client synologyClient) Delete(path string, recursive bool) {
+func (client synologyClient) Delete(path string, recursive bool) error {
 	log.Println("Delete")
 
-	Delete(client.apiInfo, client.host, client.sid, path, recursive)
+	_, err := Delete(client.apiInfo, client.host, client.sid, path, recursive)
+	return err
 }
 
-func (client synologyClient) Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) {
+func (client synologyClient) Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) error {
 	log.Println("Upload path=" + path + " filename=" + fileName)
 
-	statusCode := Upload(client.apiInfo, client.host, client.sid, path, createParents, overwrite, fileName, fileContents)
+	statusCode, err := Upload(client.apiInfo, client.host, client.sid, path, createParents, overwrite, fileName, fileContents)
 	log.Println(statusCode)
+
+	return err
 }
 
 func NewClient() SynologyClient {

@@ -25,22 +25,25 @@ type FileStationFile struct {
 	Additional interface{}
 }
 
-func GetFileStationInfo(apiInfo map[string]InfoData, host string, sid string) FileStationInfo {
+func GetFileStationInfo(apiInfo map[string]InfoData, host string, sid string) (FileStationInfo, error) {
 
 	queryString := make(map[string]string)
 	queryString["method"] = "get"
 	queryString["_sid"] = sid
 
-	_, apiResponse := CallAPI(host, "SYNO.FileStation.Info", apiInfo, queryString)
+	_, apiResponse, err := CallAPI(host, "SYNO.FileStation.Info", apiInfo, queryString)
 
+	if err != nil {
+		return FileStationInfo{}, err
+	}
 	var fileStationInfo FileStationInfo
 
 	json.Unmarshal(apiResponse.Data, &fileStationInfo)
 
-	return fileStationInfo
+	return fileStationInfo, nil
 }
 
-func CreateFolder(apiInfo map[string]InfoData, host string, sid string, folderPath string, name string, forceParent bool, additional string) CreateFolderResponse {
+func CreateFolder(apiInfo map[string]InfoData, host string, sid string, folderPath string, name string, forceParent bool, additional string) (CreateFolderResponse, error) {
 	queryString := make(map[string]string)
 	queryString["method"] = "create"
 	queryString["_sid"] = sid
@@ -51,15 +54,18 @@ func CreateFolder(apiInfo map[string]InfoData, host string, sid string, folderPa
 		queryString["additional"] = additional
 	}
 
-	_, apiResponse := CallAPI(host, "SYNO.FileStation.CreateFolder", apiInfo, queryString)
+	_, apiResponse, err := CallAPI(host, "SYNO.FileStation.CreateFolder", apiInfo, queryString)
+	if err != nil {
+		return CreateFolderResponse{}, err
+	}
 
 	var createFolderResponse CreateFolderResponse
 	json.Unmarshal(apiResponse.Data, &createFolderResponse)
 
-	return createFolderResponse
+	return createFolderResponse, nil
 }
 
-func Download(apiInfo map[string]InfoData, host string, sid string, path string) (int, []byte) {
+func Download(apiInfo map[string]InfoData, host string, sid string, path string) (int, []byte, error) {
 	apiName := "SYNO.FileStation.Download"
 	info := apiInfo[apiName]
 
@@ -73,12 +79,12 @@ func Download(apiInfo map[string]InfoData, host string, sid string, path string)
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	wsUrl := host + "/webapi/" + info.Path
 
-	statusCode, body := HttpCall(wsUrl, queryString)
+	statusCode, body, err := HttpCall(wsUrl, queryString)
 
-	return statusCode, body
+	return statusCode, body, err
 }
 
-func Delete(apiInfo map[string]InfoData, host string, sid string, path string, recursive bool) int {
+func Delete(apiInfo map[string]InfoData, host string, sid string, path string, recursive bool) (int, error) {
 	apiName := "SYNO.FileStation.Delete"
 	info := apiInfo[apiName]
 
@@ -94,12 +100,12 @@ func Delete(apiInfo map[string]InfoData, host string, sid string, path string, r
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	wsUrl := host + "/webapi/" + info.Path
 
-	statusCode, _ := HttpCall(wsUrl, queryString)
+	statusCode, _, err := HttpCall(wsUrl, queryString)
 
-	return statusCode
+	return statusCode, err
 }
 
-func Upload(apiInfo map[string]InfoData, host string, sid string, path string, createParents bool, overwrite bool, fileName string, fileContents []byte) int {
+func Upload(apiInfo map[string]InfoData, host string, sid string, path string, createParents bool, overwrite bool, fileName string, fileContents []byte) (int, error) {
 	apiName := "SYNO.FileStation.Upload"
 	info := apiInfo[apiName]
 	formParams := []keyValuePair{
@@ -114,7 +120,7 @@ func Upload(apiInfo map[string]InfoData, host string, sid string, path string, c
 
 	wsUrl := host + "/webapi/" + info.Path + "?api=" + apiName + "&version=" + strconv.Itoa(info.MinVersion) + "&method=upload&_sid=" + sid
 
-	statusCode, _ := HttpPostMultiFormCall(wsUrl, formParams)
+	statusCode, _, err := HttpPostMultiFormCall(wsUrl, formParams)
 
-	return statusCode
+	return statusCode, err
 }

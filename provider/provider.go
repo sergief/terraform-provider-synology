@@ -43,7 +43,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	var diags diag.Diagnostics
 	synologyClient := client.NewClient()
 
-	synologyClient.Connect(url, username, password)
+	err := synologyClient.Connect(url, username, password)
+	if err != nil {
+		return synologyClient, diag.FromErr(err)
+	}
 
 	return synologyClient, diags
 }

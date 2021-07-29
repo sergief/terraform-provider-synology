@@ -41,10 +41,11 @@ func fileCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	filename := d.Get("filename").(string)
 
 	service := FileItemService{synologyClient: client}
-	service.Create(filename, []byte(content))
-
+	err := service.Create(filename, []byte(content))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	fileReadItem(ctx, d, m)
-
 	return diags
 }
 
@@ -57,7 +58,10 @@ func fileReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) di
 
 	service := FileItemService{synologyClient: client}
 
-	content := service.Read(filename)
+	content, err := service.Read(filename)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	d.Set("filename", filename)
 	d.Set("content", string(content))
@@ -79,7 +83,9 @@ func fileDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) 
 
 	service := FileItemService{synologyClient: client}
 
-	service.Delete(filename)
-
+	err := service.Delete(filename)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }

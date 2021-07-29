@@ -11,26 +11,26 @@ type FileItemService struct {
 	synologyClient client.SynologyClient
 }
 
-func (service FileItemService) Create(filename string, contents []byte) {
+func (service FileItemService) Create(filename string, contents []byte) error {
 	log.Println("Create " + string(contents))
 	path, filename := getPathAndFilenameFromFullPath(filename)
-	service.synologyClient.Upload(path, true, true, filename, contents)
+	return service.synologyClient.Upload(path, true, true, filename, contents)
 }
 
-func (service FileItemService) Read(filename string) []byte {
+func (service FileItemService) Read(filename string) ([]byte, error) {
 	return service.synologyClient.Download(filename)
 }
 
-func (service FileItemService) Update(filename string, contents []byte) []byte {
+func (service FileItemService) Update(filename string, contents []byte) ([]byte, error) {
 	log.Println("Update " + string(contents))
 
 	path, filename := getPathAndFilenameFromFullPath(filename)
-	service.synologyClient.Upload(path, true, true, filename, contents)
-	return contents
+	err := service.synologyClient.Upload(path, true, true, filename, contents)
+	return contents, err
 }
 
-func (service FileItemService) Delete(filename string) {
-	service.synologyClient.Delete(filename, false)
+func (service FileItemService) Delete(filename string) error {
+	return service.synologyClient.Delete(filename, false)
 
 }
 

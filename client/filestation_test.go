@@ -10,9 +10,16 @@ func TestFilestationInfo(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
 
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, err := Info(srv.URL, "all")
+	if err != nil {
+		t.Error(err)
+	}
+	response, errLogin := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie")
+	if errLogin != nil {
+		t.Error(errLogin)
+	}
+	sid := response.Sid
 
-	sid := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie").Sid
 	for _, c := range []struct {
 		address  string
 		expected FileStationInfo
@@ -20,8 +27,10 @@ func TestFilestationInfo(t *testing.T) {
 		{srv.URL, FileStationInfo{Is_manager: true, Support_sharing: true, Hostname: "TEST-DS216J"}},
 	} {
 
-		got := GetFileStationInfo(apiInfo, c.address, sid)
-
+		got, errInfo := GetFileStationInfo(apiInfo, c.address, sid)
+		if errInfo != nil {
+			t.Error(errInfo)
+		}
 		if got != c.expected {
 			t.Errorf("Info(%q)", c.address)
 		}
@@ -32,9 +41,17 @@ func TestFilestationInfo(t *testing.T) {
 func TestFilestationCreateFolder(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, err := Info(srv.URL, "all")
+	if err != nil {
+		t.Error(err)
+	}
 
-	sid := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie").Sid
+	loginResponse, errLogin := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie")
+	sid := loginResponse.Sid
+	if errLogin != nil {
+		t.Error(errLogin)
+	}
+
 	for _, c := range []struct {
 		address  string
 		expected CreateFolderResponse
@@ -42,9 +59,11 @@ func TestFilestationCreateFolder(t *testing.T) {
 		{srv.URL, CreateFolderResponse{Folders: []FileStationFile{{Path: "/home/test_create_folder", Name: "test_create_folder", Isdir: true}}}},
 	} {
 
-		got := CreateFolder(apiInfo, c.address, sid, "/home", "test_create_folder", true, "")
-		// TODO: check array length
-		// check == in position by position
+		got, errCreateFolder := CreateFolder(apiInfo, c.address, sid, "/home", "test_create_folder", true, "")
+		if errCreateFolder != nil {
+			t.Error(errCreateFolder)
+		}
+
 		if len(got.Folders) != len(c.expected.Folders) {
 			t.Error("Length differs")
 		}
@@ -61,9 +80,17 @@ func TestFilestationCreateFolder(t *testing.T) {
 func TestFilestationUpload(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, errInfo := Info(srv.URL, "all")
+	if errInfo != nil {
+		t.Error(errInfo)
+	}
 
-	sid := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie").Sid
+	loginResponse, errLogin := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie")
+	sid := loginResponse.Sid
+	if errLogin != nil {
+		t.Error(errLogin)
+	}
+
 	for _, c := range []struct {
 		address  string
 		expected int
@@ -76,8 +103,10 @@ func TestFilestationUpload(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		got := Upload(apiInfo, srv.URL, sid, "/home/downloaded", true, true, "cat.jpg", fileContents)
-
+		got, err := Upload(apiInfo, srv.URL, sid, "/home/downloaded", true, true, "cat.jpg", fileContents)
+		if err != nil {
+			t.Error(err)
+		}
 		if got != 200 {
 			t.Error(got)
 		}
@@ -88,9 +117,17 @@ func TestFilestationUpload(t *testing.T) {
 func TestFilestationDownload(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, errInfo := Info(srv.URL, "all")
+	if errInfo != nil {
+		t.Error(errInfo)
+	}
 
-	sid := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie").Sid
+	loginResponse, errLogin := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie")
+	sid := loginResponse.Sid
+	if errLogin != nil {
+		t.Error(errLogin)
+	}
+
 	for _, c := range []struct {
 		address  string
 		expected int
@@ -98,7 +135,10 @@ func TestFilestationDownload(t *testing.T) {
 		{srv.URL, 200},
 	} {
 
-		_, got := Download(apiInfo, c.address, sid, "/home/downloaded/empty.json")
+		_, got, downloadError := Download(apiInfo, c.address, sid, "/home/downloaded/empty.json")
+		if downloadError != nil {
+			t.Error(downloadError)
+		}
 
 		if len(got) != 2 {
 			t.Error("Length differs")
@@ -111,9 +151,16 @@ func TestFilestationDownload(t *testing.T) {
 func TestFilestationDelete(t *testing.T) {
 	srv := serverMock()
 	defer srv.Close()
-	apiInfo := Info(srv.URL, "all")
+	apiInfo, errInfo := Info(srv.URL, "all")
+	if errInfo != nil {
+		t.Error(errInfo)
+	}
 
-	sid := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie").Sid
+	loginResponse, errLogin := Login(apiInfo, srv.URL, "testuser", "password1234", "TestAuth", "cookie")
+	sid := loginResponse.Sid
+	if errLogin != nil {
+		t.Error(errLogin)
+	}
 	for _, c := range []struct {
 		address  string
 		expected int
@@ -121,7 +168,10 @@ func TestFilestationDelete(t *testing.T) {
 		{srv.URL, 200},
 	} {
 
-		got := Delete(apiInfo, c.address, sid, "/home/downloaded/cat.jpg", false)
+		got, errDelete := Delete(apiInfo, c.address, sid, "/home/downloaded/cat.jpg", false)
+		if errDelete != nil {
+			t.Error(errDelete)
+		}
 
 		if got != 200 {
 			t.Error("Wrong status code")
