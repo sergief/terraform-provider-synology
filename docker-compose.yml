@@ -4,4 +4,4 @@ services:
     build: .
     volumes:
       - ./bin:/app/bin
-
+    

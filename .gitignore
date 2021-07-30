@@ -1,3 +1,4 @@
 examples/.terraform*
 examples/terraform.tfstate*
 bin
+.vscode
