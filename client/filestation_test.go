@@ -99,11 +99,11 @@ func TestFilestationUpload(t *testing.T) {
 	} {
 		log.Print(c)
 
-		fileContents, err := ioutil.ReadFile("./test-fixtures/cat.jpg")
+		fileContents, err := ioutil.ReadFile("./test-fixtures/cat.txt")
 		if err != nil {
 			t.Error(err)
 		}
-		got, err := Upload(apiInfo, srv.URL, sid, "/home/downloaded", true, true, "cat.jpg", fileContents)
+		got, err := Upload(apiInfo, srv.URL, sid, "/home/downloaded", true, true, "cat.txt", fileContents)
 		if err != nil {
 			t.Error(err)
 		}
@@ -168,7 +168,7 @@ func TestFilestationDelete(t *testing.T) {
 		{srv.URL, 200},
 	} {
 
-		got, errDelete := Delete(apiInfo, c.address, sid, "/home/downloaded/cat.jpg", false)
+		got, errDelete := Delete(apiInfo, c.address, sid, "/home/downloaded/cat.txt", false)
 		if errDelete != nil {
 			t.Error(errDelete)
 		}
