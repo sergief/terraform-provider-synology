@@ -18,3 +18,8 @@ resource "synology_file" "hello-world" {
   filename = "/home/downloaded/hello-world.txt"
   content = "Hello World"
 }
+
+resource "synology_file" "hello-world-from-file" {
+  filename = "/home/downloaded/hello-world-ref.txt"
+  content = file("./hello-world.txt")
+}
