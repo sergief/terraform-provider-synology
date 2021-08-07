@@ -9,7 +9,7 @@ If you have the `Go` environment installed, you can simply run the makefile:
 make clean build test release
 ```
 ### Using the docker-compose image
-You don't need to install the golang development environment, simply run:
+You don't need to install the golang development environment if you already have a working `docker` environment, simply run:
 ```bash
 docker-compose run app make clean build test release
 ```
