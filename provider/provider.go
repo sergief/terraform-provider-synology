@@ -29,7 +29,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"synology_file": fileItem(),
+			"synology_file":   fileItem(),
+			"synology_folder": folderItem(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

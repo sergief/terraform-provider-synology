@@ -9,9 +9,9 @@ terraform {
 
 provider "synology" {
     url = "http://192.168.1.5:5000"
-    #username = "test"
-    #password = "test"
-    # these variables can be set as env vars in SYNOLOGY_USERNAME and SYNOLOGY_PASSWORD
+    #username = "testuser"
+    #password = "testpassword"
+    # these variables can be set as env vars in SYNOLOGY_ADDRESS SYNOLOGY_USERNAME and SYNOLOGY_PASSWORD
 }
 
 resource "synology_file" "hello-world" {
@@ -22,4 +22,8 @@ resource "synology_file" "hello-world" {
 resource "synology_file" "hello-world-from-file" {
   filename = "/home/downloaded/hello-world-ref.txt"
   content = file("./hello-world.txt")
+}
+
+resource "synology_folder" "my-folder" {
+  path = "/home/downloaded/sample-folder"
 }

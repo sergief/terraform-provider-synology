@@ -37,3 +37,20 @@ func (service FileItemService) Delete(filename string) error {
 func getPathAndFilenameFromFullPath(fullPath string) (string, string) {
 	return filepath.Dir(fullPath), filepath.Base(fullPath)
 }
+
+type FolderItemService struct {
+	synologyClient client.SynologyClient
+}
+
+func (service FolderItemService) Create(path string) error {
+	log.Println("Create Folder" + string(path))
+	basePath, name := getPathAndFilenameFromFullPath(path)
+	_, error := service.synologyClient.CreateFolder(basePath, name, true, "")
+	return error
+}
+
+func (service FolderItemService) Delete(path string) error {
+	log.Println("Delete Folder" + string(path))
+	return service.synologyClient.Delete(path, true)
+
+}
