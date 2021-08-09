@@ -13,7 +13,7 @@ var testAccProvider *schema.Provider
 func init() {
 	testAccProvider = Provider()
 	testAccProviders = map[string]*schema.Provider{
-		"hashicups": testAccProvider,
+		"synology": testAccProvider,
 	}
 }
 
@@ -28,6 +28,10 @@ func TestProvider_impl(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
+	if err := os.Getenv("SYNOLOGY_ADDRESS"); err == "" {
+		t.Fatal("SYNOLOGY_ADDRESS must be set for acceptance tests")
+	}
+
 	if err := os.Getenv("SYNOLOGY_USERNAME"); err == "" {
 		t.Fatal("SYNOLOGY_USERNAME must be set for acceptance tests")
 	}
