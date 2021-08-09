@@ -11,7 +11,7 @@ make clean build test release
 ### Using the docker-compose image
 You don't need to install the golang development environment if you already have a working `docker` environment, simply run:
 ```bash
-docker-compose run app make clean build test release
+docker-compose build --no-cache && docker-compose run app make clean build test release
 ```
 
 After this, pick up the version specifically compiled for your OS and architecture from `./bin` and put it in `$HOME/.terraform.d/plugins/github.com/sergief/synology/0.1/$OS_$ARCH/terraform-provider-synology`
