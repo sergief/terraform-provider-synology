@@ -58,7 +58,7 @@ func Call(url string, queryParams map[string]string) (int, ApiResponse, error) {
 	var result ApiResponse
 	json.Unmarshal(body, &result)
 	if !result.Success {
-		return statusCode, result, fmt.Errorf("Error retrieving server data: %s", string(body))
+		return statusCode, result, fmt.Errorf("error retrieving server data: %s", string(body))
 	}
 
 	return statusCode, result, nil
@@ -102,7 +102,6 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 			w.Close()
 
 		} else {
-			// Add other fields
 			if fw, err = w.CreateFormField(key); err != nil {
 				return 0, ApiResponse{}, err
 
@@ -118,12 +117,10 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 	if err != nil {
 		return 0, ApiResponse{}, err
 	}
-	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	log.Print("Call url=" + req.URL.String())
 
-	// Submit the request
 	res, err := client.Do(req)
 	if err != nil {
 		return 0, ApiResponse{}, err
@@ -139,7 +136,7 @@ func HttpPostMultiFormCall(url string, formParams []keyValuePair) (int, ApiRespo
 	var result ApiResponse
 	json.Unmarshal(body, &result)
 	if !result.Success {
-		return 0, ApiResponse{}, fmt.Errorf("Error retrieving server data: %s", string(body))
+		return 0, ApiResponse{}, fmt.Errorf("error retrieving server data: %s", string(body))
 	}
 	return res.StatusCode, result, nil
 }
